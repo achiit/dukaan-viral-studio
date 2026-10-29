@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ViralCut Studio</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f5fb;--card:#fff;--tx:#17141f;--mut:#6b6780;--ac:#7c3aed;--ac2:#ec4899;--bd:#e3e0ee}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f0d17;--card:#191626;--tx:#f1eefc;--mut:#9a95b3;--bd:#2a2540}}
+:root[data-theme="dark"]{--bg:#0f0d17;--card:#191626;--tx:#f1eefc;--mut:#9a95b3;--bd:#2a2540}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45}
+header{padding:22px 16px 6px;text-align:center}
+h1{margin:0;font-size:28px;letter-spacing:-.5px;background:linear-gradient(90deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{margin:4px 0 0;color:var(--mut);font-size:14px}
+main{max-width:980px;margin:0 auto;padding:14px;display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:820px){main{grid-template-columns:380px minmax(0,1fr)}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px}
+.stage{display:flex;flex-direction:column;align-items:center;gap:10px}
+canvas{width:100%;max-width:340px;aspect-ratio:9/16;background:#000;border-radius:14px}
+video{display:none}
+label{display:block;font-size:12px;color:var(--mut);margin:10px 0 3px}
+input[type=text],input[type=url],select{width:100%;padding:9px 10px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:14px}
+input[type=range]{width:100%;accent-color:var(--ac)}
+.row{display:flex;gap:8px}.row>*{flex:1}
+button{padding:10px 14px;border:0;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;background:var(--bg);color:var(--tx);border:1px solid var(--bd)}
+button.p{background:linear-gradient(90deg,var(--ac),var(--ac2));color:#fff;border:0}
+button:disabled{opacity:.5;cursor:not-allowed}
+.drop{border:2px dashed var(--bd);border-radius:12px;padding:14px;text-align:center;color:var(--mut);font-size:13px;margin-top:8px;cursor:pointer}
+#msg{font-size:13px;color:var(--mut);margin-top:8px;min-height:18px}
+h2{font-size:15px;margin:0 0 4px}
+.v{display:flex;justify-content:space-between;font-size:12px;color:var(--mut)}
+#dl{display:none;margin-top:8px;text-align:center;text-decoration:none;color:#fff;padding:11px;border-radius:10px;background:var(--ac);font-weight:600}
+</style></head><body>
+<header><h1>ViralCut Studio</h1><p>Video se viral short banao: trim, 9:16 crop, hook, captions aur download</p></header>
+<main>
+<section class="card stage">
+<canvas id="c" width="540" height="960"></canvas>
+<div class="row" style="width:100%;max-width:340px">
+<button id="play" disabled>Play</button>
+<button id="rec" class="p" disabled>Export Short</button>
+</div>
+<a id="dl" download="viralcut-short.webm" style="width:100%;max-width:340px">Download Short</a>
+</section>
+<section class="card">
+<h2>1. Video load karo</h2>
+<label>Direct video link (.mp4 / .webm)</label>
+<div class="row"><input type="url" id="url" placeholder="https://example.com/video.mp4" style="flex:3"><button id="go" style="flex:1">Load</button></div>
+<div class="drop" id="drop">Ya video file yahan drop karo / tap karo<input type="file" id="file" accept="video/*" hidden></div>
+<div id="msg"></div>
+
+<h2 style="margin-top:16px">2. Edit</h2>
+<button id="auto" disabled style="width:100%;margin-top:6px">Auto viral moment dhoondo (loudest part)</button>
+<label>Start</label><input type="range" id="st" min="0" max="1" step="0.1" value="0"><div class="v"><span id="stv">0s</span><span id="len"></span></div>
+<label>End</label><input type="range" id="en" min="0" max="1" step="0.1" value="1"><div class="v"><span id="env">0s</span><span></span></div>
+<div class="row"><div><label>Zoom</label><input type="range" id="zm" min="1" max="2.5" step="0.05" value="1"></div>
+<div><label>Left / Right</label><input type="range" id="px" min="0" max="1" step="0.01" value="0.5"></div></div>
+<div class="row"><div><label>Filter</label><select id="fl"><option value="none">Normal</option><option value="saturate(1.5) contrast(1.1)">Vivid</option><option value="sepia(.4) saturate(1.3)">Warm</option><option value="grayscale(1) contrast(1.1)">Black &amp; White</option><option value="brightness(1.15) contrast(1.15) saturate(1.2)">Bright</option></select></div>
+<div><label>Speed</label><select id="sp"><option value="1">1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="0.75">0.75x</option></select></div></div>
+<label>Hook (upar ka text, pehle 3 second ke liye)</label><input type="text" id="hook" value="Yeh dekh kar hairaan reh jaoge!">
+<label>Caption (neeche ka text)</label><input type="text" id="cap" placeholder="Apna caption likho">
+<div class="row"><div><label>Text colour</label><select id="tc"><option value="#ffffff">White</option><option value="#ffe600">Yellow</option><option value="#ff4d8d">Pink</option><option value="#4dffb8">Green</option></select></div>
+<div><label>Progress bar</label><select id="pb"><option value="1">On</option><option value="0">Off</option></select></div></div>
+<p style="font-size:12px;color:var(--mut);margin:12px 0 0">Note: sirf apni ya allowed videos use karo. Instagram / YouTube / TikTok ke page links browser mein direct download nahi ho sakte (iske liye server chahiye); video file save karke upload karo.</p>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const c=$('c'),x=c.getContext('2d'),W=540,H=960;
+const v=document.createElement('video');v.playsInline=true;v.preload='auto';
+let ready=false,recording=false,mr=null,chunks=[];
+function msg(t){$('msg').textContent=t}
+function load(src,blob){
+  ready=false;['play','rec','auto'].forEach(i=>$(i).disabled=true);$('dl').style.display='none';
+  v.removeAttribute('crossorigin');if(!blob)v.crossOrigin='anonymous';
+  v.src=src;msg('Video load ho rahi hai...');
+  v.onerror=()=>msg('Video load nahi hui. Link direct .mp4 hona chahiye aur CORS allow karna chahiye, warna file upload karo.');
+  v.onloadedmetadata=()=>{
+    const d=v.duration;if(!isFinite(d))return msg('Video duration nahi mili.');
+    ['st','en'].forEach(i=>$(i).max=d);$('st').value=0;$('en').value=Math.min(d,45);
+    ready=true;['play','rec','auto'].forEach(i=>$(i).disabled=false);upd();
+    msg('Video tayyar hai. Total '+d.toFixed(1)+'s. Short ke liye 15-45s behtareen hota hai.');
+    v.currentTime=0;window._src=src;
+  };
+}
+function upd(){
+  let s=+$('st').value,e=+$('en').value;if(e<=s+1){e=Math.min(+$('en').max,s+1);$('en').value=e}
+  $('stv').textContent=s.toFixed(1)+'s';$('env').textContent=e.toFixed(1)+'s';$('len').textContent='Length: '+(e-s).toFixed(1)+'s';
+  if(ready&&v.paused&&!recording)v.currentTime=s;
+}
+['st','en'].forEach(i=>$(i).addEventListener('input',upd));
+$('go').onclick=()=>{const u=$('url').value.trim();if(u)load(u,false)};
+$('drop').onclick=()=>$('file').click();
+$('file').onchange=e=>{const f=e.target.files[0];if(f)load(URL.createObjectURL(f),true)};
+$('drop').ondragover=e=>e.preventDefault();
+$('drop').ondrop=e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)load(URL.createObjectURL(f),true)};
+$('play').onclick=()=>{
+  if(v.paused){const s=+$('st').value,e=+$('en').value;if(v.currentTime<s||v.currentTime>=e)v.currentTime=s;v.playbackRate=+$('sp').value;v.muted=false;v.play();$('play').textContent='Pause'}
+  else{v.pause();$('play').textContent='Play'}
+};
+$('auto').onclick=async()=>{
+  msg('Audio analyse ho rahi hai...');
+  try{
+    const buf=await (await fetch(window._src)).arrayBuffer();
+    const ac=new (window.AudioContext||window.webkitAudioContext)();
+    const a=await ac.decodeAudioData(buf);const ch=a.getChannelData(0),sr=a.sampleRate,n=Math.floor(a.duration);
+    const r=[];for(let i=0;i<n;i++){let s=0;const o=i*sr;for(let j=0;j<sr;j+=20){s+=ch[o+j]*ch[o+j]||0}r.push(Math.sqrt(s/(sr/20)))}
+    const L=Math.min(30,n);let best=0,bi=0,sum=0;
+    for(let i=0;i<n;i++){sum+=r[i];if(i>=L)sum-=r[i-L];if(i>=L-1&&sum>best){best=sum;bi=i-L+1}}
+    $('st').value=bi;$('en').value=bi+L;upd();msg('Sabse energetic '+L+'s ka hissa select ho gaya: '+bi+'s se.');
+  }catch(e){msg('Auto-detect nahi ho saka (is link ke liye). Slider se khud select karo.')}
+};
+function wrap(t,max){const w=t.split(' '),l=[];let cur='';for(const k of w){const tt=cur?cur+' '+k:k;if(x.measureText(tt).width>max&&cur){l.push(cur);cur=k}else cur=tt}if(cur)l.push(cur);return l}
+function text(t,y,size,col,fromBottom){
+  if(!t)return;x.font='800 '+size+'px system-ui,Arial,sans-serif';x.textAlign='center';x.lineJoin='round';
+  const L=wrap(t,W-70),lh=size*1.2;let y0=fromBottom?y-(L.length-1)*lh:y;
+  L.forEach((l,i)=>{x.lineWidth=size/4;x.strokeStyle='#000';x.strokeText(l,W/2,y0+i*lh);x.fillStyle=col;x.fillText(l,W/2,y0+i*lh)});
+}
+function draw(){
+  x.fillStyle='#000';x.fillRect(0,0,W,H);
+  if(v.videoWidth){
+    const z=+$('zm').value,sc=Math.max(W/v.videoWidth,H/v.videoHeight)*z,dw=v.videoWidth*sc,dh=v.videoHeight*sc;
+    x.filter=$('fl').value;x.drawImage(v,(W-dw)*(+$('px').value),(H-dh)/2,dw,dh);x.filter='none';
+    const s=+$('st').value,e=+$('en').value,t=v.currentTime-s,col=$('tc').value;
+    if(!v.paused&&v.currentTime>=e){ if(recording)stopRec();else{v.currentTime=s} }
+    if(t<3||v.paused&&t<=3)text($('hook').value,150,46,col,false);
+    text($('cap').value,H-170,42,col,true);
+    if($('pb').value==='1'){x.fillStyle='rgba(255,255,255,.25)';x.fillRect(0,H-10,W,10);x.fillStyle='#ec4899';x.fillRect(0,H-10,W*Math.max(0,Math.min(1,t/(e-s))),10)}
+  }else{x.fillStyle='#888';x.font='600 22px system-ui';x.textAlign='center';x.fillText('Video load karo',W/2,H/2)}
+  requestAnimationFrame(draw);
+}
+draw();
+function stopRec(){recording=false;v.pause();$('play').textContent='Play';if(mr&&mr.state!=='inactive')mr.stop()}
+$('rec').onclick=()=>{
+  if(recording){stopRec();return}
+  try{
+    const s=c.captureStream(30);
+    try{const vs=v.captureStream?v.captureStream():v.mozCaptureStream();vs.getAudioTracks().forEach(t=>s.addTrack(t))}catch(e){}
+    const mt=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4'].find(m=>MediaRecorder.isTypeSupported(m));
+    mr=new MediaRecorder(s,{mimeType:mt,videoBitsPerSecond:6e6});chunks=[];
+    mr.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+    mr.onstop=()=>{const b=new Blob(chunks,{type:mt});const a=$('dl');a.href=URL.createObjectURL(b);a.download='viralcut-short.'+(mt.includes('mp4')?'mp4':'webm');a.style.display='block';$('rec').textContent='Export Short';msg('Short tayyar hai! Download button dabao.')};
+    recording=true;$('rec').textContent='Stop (recording...)';msg('Recording ho rahi hai, short ke khatam hone tak ruko...');
+    v.currentTime=+$('st').value;v.playbackRate=+$('sp').value;v.muted=false;mr.start(250);v.play();
+  }catch(e){recording=false;msg('Is browser mein export support nahi. Chrome ya Edge use karo.')}
+};
+</script></body></html>
